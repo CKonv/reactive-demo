@@ -1,0 +1,23 @@
+CREATE DATABASE IF NOT EXISTS test;
+
+CREATE TABLE IF NOT EXISTS test.object1 (
+    id int AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS test.object2 (
+    id int AUTO_INCREMENT PRIMARY KEY,
+    name_key VARCHAR(100) NOT NULL
+    ) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS test.object1_x_object2 (
+    id int AUTO_INCREMENT PRIMARY KEY,
+    o1_id INT NOT NULL,
+    o2_id INT NOT NULL,
+    CONSTRAINT `fk_o1`
+        FOREIGN KEY (o1_id) REFERENCES object1 (id)
+        ON UPDATE RESTRICT,
+    CONSTRAINT `fk_o2`
+        FOREIGN KEY (o2_id) REFERENCES object2 (id)
+        ON UPDATE RESTRICT
+) ENGINE = InnoDB;

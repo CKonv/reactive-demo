@@ -34,6 +34,7 @@ public class GreetingsController {
   @PostMapping(value = "/post_flux_get_mono")
   public Mono<Greeting> getGreetingFromFlux(@RequestBody Flux<Name> names) {
     return names
+        .onErrorResume(e -> System.out::println)
         .doOnEach(System.out::println)
         .collectList()
         .flatMap(
