@@ -1,11 +1,12 @@
-package de.ckonv.reactivedemo.reactivemariadb.persistance;
+package de.ckonv.reactivedemo.reactivemariadb.persistence;
 
+import de.ckonv.reactivedemo.reactivemariadb.domain.model.BusinessObject1XBusinessObject2;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Mono;
 
-public interface Object1_x_object2Repository
-    extends ReactiveCrudRepository<Object1_x_object2, Integer> {
+public interface BusinessObject1XBusinessObject2Repository
+    extends ReactiveCrudRepository<BusinessObject1XBusinessObject2, Integer> {
 
   @Query("DELETE FROM test.object1_x_object2 WHERE o1_id = :o1_id")
   Mono<Integer> deleteAllByO1_id(Integer o1_id);
