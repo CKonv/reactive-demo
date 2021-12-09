@@ -5,9 +5,13 @@ import de.ckonv.reactivedemo.reactivemariadb.domain.model.Object1xObject2;
 import de.ckonv.reactivedemo.reactivemariadb.persistence.BusinessObject1XBusinessObject2Repository;
 import de.ckonv.reactivedemo.reactivemariadb.persistence.BusinessObject2Repository;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Publisher;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -23,36 +27,36 @@ public class ObjectService {
   public Flux<BusinessObject1XBusinessObject2> saveMappingDtos(Flux<Object1xObject2> dtos) {
 
     var saved =
-        dtos.log()
-            .mapNotNull(
-                dto -> {
-                  if (!dto.getBusinessObject2NameKeys().isEmpty()) {
-                    return dto.getBusinessObject2NameKeys().stream()
-                        .collect(Collectors.toMap(e -> e, e -> dto.getBusinessObject1Id()));
-                  }
-                  return null;
-                })
+        dtos.mapNotNull(getO1IdKeysMappingFunction())
             .map(Map::entrySet)
             .flatMap(Flux::fromIterable)
-            .flatMap(
-                e -> {
-                  log.info("e: " + e.toString());
-                  return businessObject2Repository
-                      .findFirstByNameKey(e.getKey())
-                      .map(
-                          a -> {
-                            log.info("a: " + a.toString());
-                            return Map.entry(a.getId(), e.getValue());
-                          });
-                })
-            .map(
-                e ->
-                    BusinessObject1XBusinessObject2.builder()
-                        .o1_id(e.getValue())
-                        .o2_id(e.getKey())
-                        .build())
+            .flatMap(mapMappingStringToIdFunction())
+            .map(getO1xO2EntityFromMappingFunction())
             .flatMap(businessObject1XBusinessObject2Repository::save);
 
     return businessObject1XBusinessObject2Repository.deleteAll().thenMany(saved);
+  }
+
+  private Function<Entry<Integer, Integer>, BusinessObject1XBusinessObject2>
+      getO1xO2EntityFromMappingFunction() {
+    return mapping ->
+        BusinessObject1XBusinessObject2.builder()
+            .o1_id(mapping.getValue())
+            .o2_id(mapping.getKey())
+            .build();
+  }
+
+  private Function<Entry<String, @NonNull Integer>, Publisher<? extends Entry<Integer, Integer>>>
+      mapMappingStringToIdFunction() {
+    return mapEntry ->
+        businessObject2Repository
+            .findFirstByNameKey(mapEntry.getKey())
+            .map(businessObject2 -> Map.entry(businessObject2.getId(), mapEntry.getValue()));
+  }
+
+  private Function<Object1xObject2, Map<String, @NonNull Integer>> getO1IdKeysMappingFunction() {
+    return mapping ->
+        mapping.getBusinessObject2NameKeys().stream()
+            .collect(Collectors.toMap(key -> key, key -> mapping.getBusinessObject1Id()));
   }
 }
